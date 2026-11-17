@@ -64,7 +64,7 @@ def test_file_structure():
         "lib/widgets/upi_app_selector.dart",
     ]
 
-    base_dir = "/root/agriculture_coaching_hisar"
+    base_dir = os.path.dirname(os.path.abspath(__file__))
     missing = []
     for f in required_files:
         path = os.path.join(base_dir, f)
@@ -79,7 +79,8 @@ def test_file_structure():
 
 def test_android_manifest_upi_queries():
     print("\n>>> Testing AndroidManifest.xml UPI Queries & Permissions...")
-    manifest_path = "/root/edupulse_app/android/app/src/main/AndroidManifest.xml"
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    manifest_path = os.path.join(base_dir, "android/app/src/main/AndroidManifest.xml")
     with open(manifest_path, "r") as f:
         content = f.read()
 
