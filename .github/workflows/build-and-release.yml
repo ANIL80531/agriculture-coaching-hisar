@@ -1,0 +1,186 @@
+name: Agriculture Coaching Hisar CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, master ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+    inputs:
+      build_mode:
+        description: 'Build Mode (debug / release / all)'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - debug
+          - release
+          - all
+
+jobs:
+  # ==========================================
+  # JOB 1: Test, Lint and Code Quality Check
+  # ==========================================
+  test-and-lint:
+    name: Run Tests & Verification
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Setup Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.50.0'
+          channel: 'stable'
+          cache: true
+          cache-key: 'flutter-:os:-:channel:-:version:-:arch:-:hash:'
+
+      - name: Cache Pub Dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pub-cache
+            .dart_tool
+          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pub-
+
+      - name: Install Flutter Dependencies
+        run: flutter pub get
+
+      - name: Analyze Dart Code (Linter)
+        run: flutter analyze --no-fatal-infos
+
+      - name: Run Flutter Unit & Widget Tests
+        run: flutter test
+
+      - name: Run Custom Verification Script
+        run: python3 verify_project.py
+
+  # ==========================================
+  # JOB 2: Build Android APKs & App Bundle
+  # ==========================================
+  build-android:
+    name: Build Android APKs (Debug & Release)
+    needs: test-and-lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Setup Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.50.0'
+          channel: 'stable'
+          cache: true
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      # Build Debug APK (For direct installation and testing)
+      - name: Build Android Debug APK
+        if: ${{ github.event.inputs.build_mode == 'debug' || github.event.inputs.build_mode == 'all' || github.event_name == 'push' || github.event_name == 'pull_request' }}
+        run: |
+          flutter build apk --debug
+          mkdir -p dist/debug
+          cp build/app/outputs/flutter-apk/app-debug.apk dist/debug/agriculture-coaching-hisar-debug.apk
+
+      # Build Release APK with ABI Splits (Optimized for ARM64, ARMv7)
+      - name: Build Android Release APK
+        if: ${{ github.event.inputs.build_mode == 'release' || github.event.inputs.build_mode == 'all' || startsWith(github.ref, 'refs/tags/v') }}
+        run: |
+          flutter build apk --release --split-per-abi
+          mkdir -p dist/release
+          cp build/app/outputs/flutter-apk/*.apk dist/release/
+
+      # Build Android App Bundle (For Google Play Store distribution)
+      - name: Build Android App Bundle (.aab)
+        if: ${{ github.event.inputs.build_mode == 'release' || github.event.inputs.build_mode == 'all' || startsWith(github.ref, 'refs/tags/v') }}
+        run: |
+          flutter build appbundle --release
+          mkdir -p dist/bundle
+          cp build/app/outputs/bundle/release/*.aab dist/bundle/agriculture-coaching-hisar-release.aab || true
+
+      # Upload Debug APK as GitHub Actions Artifact
+      - name: Upload Debug APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: agriculture-coaching-hisar-debug-apk
+          path: dist/debug/*.apk
+          retention-days: 14
+
+      # Upload Release APKs as GitHub Actions Artifact
+      - name: Upload Release APKs Artifact
+        if: ${{ github.event.inputs.build_mode == 'release' || github.event.inputs.build_mode == 'all' || startsWith(github.ref, 'refs/tags/v') }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: agriculture-coaching-hisar-release-apks
+          path: dist/release/*.apk
+          retention-days: 14
+
+      # Upload App Bundle Artifact
+      - name: Upload Android App Bundle Artifact
+        if: ${{ github.event.inputs.build_mode == 'release' || github.event.inputs.build_mode == 'all' || startsWith(github.ref, 'refs/tags/v') }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: agriculture-coaching-hisar-appbundle
+          path: dist/bundle/*.aab
+          retention-days: 14
+
+  # ==========================================
+  # JOB 3: Automatic GitHub Release on Tag
+  # ==========================================
+  release:
+    name: Publish GitHub Release
+    needs: build-android
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Download Built Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-artifacts
+
+      - name: Create GitHub Release with APKs
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "Agriculture Coaching Hisar Release ${{ github.ref_name }}"
+          body: |
+            ## 🌾 Agriculture Coaching Hisar - Android Application Release
+            
+            ### 📱 What's Included:
+            - **Live Classes & Interactive Lectures**
+            - **Google Sign-In & Student/Educator Workspaces**
+            - **Direct 100% UPI Fee Payment** (PhonePe, GPay, Paytm, BHIM to `8053127034@sbi`)
+            - **Access Controlled Course Modules & Videos**
+            - **MCQ Question Maker & Student Quiz Assessment Engine**
+            - **Agricultural PPT Presentation & Slide Viewer**
+            
+            ### ⬇️ Download Links:
+            - Download `agriculture-coaching-hisar-debug.apk` below to test immediately on any Android phone.
+          files: |
+            release-artifacts/agriculture-coaching-hisar-debug-apk/*.apk
+            release-artifacts/agriculture-coaching-hisar-release-apks/*.apk
+            release-artifacts/agriculture-coaching-hisar-appbundle/*.aab
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
