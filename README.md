@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # 🌾 Agriculture Coaching Hisar - Online Teaching & Learning Platform (Flutter Android App)
 
 A production-grade Android mobile application built with the **Flutter Framework** for educators to teach online and students to learn interactively.
@@ -219,3 +220,6 @@ static const String merchantUpiId = '8053127034@sbi';
 static const String merchantName = 'Agriculture Coaching Hisar';
 ```
 All student course purchases made using PhonePe, Google Pay, Paytm, BHIM, CRED, or any other UPI app will be credited directly to `8053127034@sbi`.
+=======
+# agriculture-coaching-hisar
+>>>>>>> c27f3354dffb7a726513184db65a286797693205
