@@ -41,7 +41,7 @@
     <application
         android:label="Agriculture Coaching Hisar"
         android:name="${applicationName}"
-        android:icon="@drawable/launch_background">
+        android:icon="@mipmap/ic_launcher">
         <activity
             android:name=".MainActivity"
             android:exported="true"

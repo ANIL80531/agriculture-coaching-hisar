@@ -20,7 +20,7 @@ def test_file_structure():
         "pubspec.yaml",
         "analysis_options.yaml",
         "android/app/src/main/AndroidManifest.xml",
-        "android/app/build.gradle",
+        "android/app/build.gradle.kts",
         "lib/main.dart",
         "lib/config/app_constants.dart",
         "lib/config/app_theme.dart",
