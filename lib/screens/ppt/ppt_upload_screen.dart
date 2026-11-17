@@ -22,7 +22,7 @@ class _PptUploadScreenState extends State<PptUploadScreen> {
   
   String? _selectedCourseId;
   String? _selectedFileName;
-  int _slideCount = 5;
+  final int _slideCount = 5;
 
   @override
   void dispose() {
