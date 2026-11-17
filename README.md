@@ -155,6 +155,32 @@ Starting with **Android 11 (API level 30)**, apps must declare package visibilit
 
 ---
 
+## 🔄 GitHub Actions CI/CD Pipeline
+
+The project includes a production-ready GitHub Actions workflow in [.github/workflows/build-and-release.yml](file:///root/agriculture_coaching_hisar/.github/workflows/build-and-release.yml).
+
+### Automated Pipeline Stages:
+1. **Lint & Test**: Runs `flutter analyze`, `flutter test`, and `python3 verify_project.py` on Ubuntu runners.
+2. **Multi-Target Android Build**:
+   - **Debug APK**: `agriculture-coaching-hisar-debug.apk` (uploaded as an artifact).
+   - **Release APKs**: Split per ABI (`arm64-v8a`, `armeabi-v7a`, `x86_64`).
+   - **Android App Bundle (.aab)**: For Google Play Store deployment.
+3. **Automated Releases**: Pushing a tag (e.g. `git tag v1.0.0 && git push origin v1.0.0`) automatically publishes a GitHub Release with the APKs attached.
+4. **Manual Trigger (`workflow_dispatch`)**: Trigger a build anytime directly from the GitHub Actions tab.
+
+### Connecting to Your GitHub Repository:
+```bash
+cd /root/agriculture_coaching_hisar
+
+# Add your GitHub remote repository URL
+git remote add origin https://github.com/<your-username>/agriculture-coaching-hisar.git
+
+# Push the main branch to start the automated GitHub Actions build
+git push -u origin main
+```
+
+---
+
 ## 🚀 How to Build and Run the App
 
 ### Option 1: Build with Apache Maven (Recommended on Linux aarch64 / ARM64)
