@@ -40,7 +40,7 @@
 
     <application
         android:label="Agriculture Coaching Hisar"
-        android:name="io.flutter.app.FlutterApplication"
+        android:name="${applicationName}"
         android:icon="@drawable/launch_background">
         <activity
             android:name=".MainActivity"

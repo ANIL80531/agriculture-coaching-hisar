@@ -36,8 +36,9 @@ java -cp /opt/android-sdk/cmdline-tools/latest/lib/r8.jar com.android.tools.r8.D
 
 echo ">>> [4/6] Packaging Base APK with AAPT..."
 rm -f "$TEMP_BUILD/unsigned.apk"
+sed 's/\${applicationName}/android.app.Application/g' "$PROJECT_DIR/android/app/src/main/AndroidManifest.xml" > "$TEMP_BUILD/AndroidManifest.xml"
 aapt package -F "$TEMP_BUILD/unsigned.apk" \
-  -M "$PROJECT_DIR/android/app/src/main/AndroidManifest.xml" \
+  -M "$TEMP_BUILD/AndroidManifest.xml" \
   -S "$PROJECT_DIR/android/app/src/main/res" \
   -I /opt/android-sdk/platforms/android-34/android.jar -f
 
